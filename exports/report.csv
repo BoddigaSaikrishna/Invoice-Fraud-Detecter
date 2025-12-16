@@ -1,0 +1,5 @@
+invoice_id,vendor,amount,currency,date,items_count,items_summary,duplicate,inflated,fake_vendor,compliance_violation,vendor_score
+INV-0001,Acme Supplies Ltd,1200.5,USD,2025-11-01,1,Office chairs,False,False,False,False,55
+INV-0002,Trusted Services,50000.0,USD,2025-11-05,1,Consulting,True,False,False,False,100
+INV-0002,Trusted Services,50000.0,USD,2025-11-05,1,Consulting duplicate,True,False,False,False,100
+INV-0003,Test,1000000.0,USD,2025-11-10,1,Equipment,False,False,True,True,100

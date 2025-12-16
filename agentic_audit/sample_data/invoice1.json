@@ -1,0 +1,34 @@
+[
+  {
+    "invoice_id": "INV-0001",
+    "vendor": "Acme Supplies Ltd",
+    "amount": 1200.50,
+    "currency": "USD",
+    "date": "2025-11-01",
+    "items": [{"desc": "Office chairs", "qty": 10, "unit_price": 120.05}]
+  },
+  {
+    "invoice_id": "INV-0002",
+    "vendor": "Trusted Services",
+    "amount": 50000.00,
+    "currency": "USD",
+    "date": "2025-11-05",
+    "items": [{"desc": "Consulting", "qty": 1, "unit_price": 50000}]
+  },
+  {
+    "invoice_id": "INV-0002",
+    "vendor": "Trusted Services",
+    "amount": 50000.00,
+    "currency": "USD",
+    "date": "2025-11-05",
+    "items": [{"desc": "Consulting duplicate", "qty": 1, "unit_price": 50000}]
+  },
+  {
+    "invoice_id": "INV-0003",
+    "vendor": "Test",
+    "amount": 1000000.00,
+    "currency": "USD",
+    "date": "2025-11-10",
+    "items": [{"desc": "Equipment", "qty": 1, "unit_price": 1000000}]
+  }
+]

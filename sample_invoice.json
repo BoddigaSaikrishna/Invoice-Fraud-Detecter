@@ -1,0 +1,22 @@
+[
+  {
+    "invoice_id": "INV-2025-001",
+    "vendor": "Acme Office Supplies",
+    "amount": 2450.75,
+    "currency": "USD",
+    "date": "2025-12-01",
+    "items": [
+      {"desc": "Desk chairs", "qty": 5, "unit_price": 490.15}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-002",
+    "vendor": "Tech Solutions Inc",
+    "amount": 45000.00,
+    "currency": "USD",
+    "date": "2025-12-03",
+    "items": [
+      {"desc": "Software licenses", "qty": 1, "unit_price": 45000}
+    ]
+  }
+]

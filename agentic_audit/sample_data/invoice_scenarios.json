@@ -1,0 +1,113 @@
+[
+  {
+    "invoice_id": "INV-2025-001",
+    "vendor": "Acme Office Supplies",
+    "amount": 2450.75,
+    "currency": "USD",
+    "date": "2025-12-01",
+    "items": [
+      {"desc": "Desk chairs (qty 5)", "qty": 5, "unit_price": 490.15},
+      {"desc": "Filing cabinets", "qty": 2, "unit_price": 0}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-002",
+    "vendor": "GlobalTech Solutions",
+    "amount": 45000.00,
+    "currency": "USD",
+    "date": "2025-12-03",
+    "items": [
+      {"desc": "Software licenses (annual)", "qty": 1, "unit_price": 45000}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-002",
+    "vendor": "GlobalTech Solutions",
+    "amount": 45000.00,
+    "currency": "USD",
+    "date": "2025-12-03",
+    "items": [
+      {"desc": "Software licenses (annual) - DUPLICATE", "qty": 1, "unit_price": 45000}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-003",
+    "vendor": "Test Vendor LLC",
+    "amount": 500000.00,
+    "currency": "USD",
+    "date": "2025-12-05",
+    "items": [
+      {"desc": "Equipment purchase", "qty": 1, "unit_price": 500000}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-004",
+    "vendor": "Unknown Services",
+    "amount": 1200.00,
+    "currency": "USD",
+    "date": "2025-12-06",
+    "items": [
+      {"desc": "Consulting services", "qty": 1, "unit_price": 1200}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-005",
+    "vendor": "Reliable Contractors Inc",
+    "amount": 18750.50,
+    "currency": "USD",
+    "date": "2025-12-07",
+    "items": [
+      {"desc": "Maintenance services", "qty": 3, "unit_price": 6250.17}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-006",
+    "vendor": "Xyz",
+    "amount": 999.99,
+    "currency": "USD",
+    "date": "2025-12-08",
+    "items": [
+      {"desc": "Office supplies", "qty": 1, "unit_price": 999.99}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-007",
+    "vendor": "Premium Services Corp",
+    "amount": 3500000.00,
+    "currency": "USD",
+    "date": "2025-12-09",
+    "items": [
+      {"desc": "Infrastructure project", "qty": 1, "unit_price": 3500000}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-008",
+    "vendor": "Standard Supplies Ltd",
+    "amount": 5600.00,
+    "currency": "USD",
+    "date": "2025-12-10",
+    "items": [
+      {"desc": "Paper and printing", "qty": 1, "unit_price": 5600}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-009",
+    "vendor": "Standard Supplies Ltd",
+    "amount": 5600.00,
+    "currency": "USD",
+    "date": "2025-12-10",
+    "items": [
+      {"desc": "Paper and printing", "qty": 1, "unit_price": 5600}
+    ]
+  },
+  {
+    "invoice_id": "INV-2025-010",
+    "vendor": "Trusted Government Partners",
+    "amount": 12345.67,
+    "currency": "USD",
+    "date": "2025-12-11",
+    "items": [
+      {"desc": "Professional services", "qty": 2, "unit_price": 6172.84}
+    ]
+  }
+]

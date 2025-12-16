@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "total": 1
+  },
+  "records": [
+    {
+      "invoice_id": "Sold",
+      "vendor": "Flipkart Internet Private Limited",
+      "amount": 1.0,
+      "currency": "USD",
+      "date": "05-12-2025",
+      "items": [],
+      "raw": {
+        "invoice_id": "Sold",
+        "vendor": "Flipkart Internet Private Limited",
+        "amount": 1.0,
+        "date": "05-12-2025",
+        "description": "Uploaded invoice"
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [],
+    "inflated": [],
+    "fake_vendors": []
+  },
+  "compliance": {
+    "violations": []
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Flipkart Internet Private Limited": {
+        "score": 49,
+        "count": 1,
+        "total_amount": 1.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 1,
+    "fraud_alerts": 0,
+    "compliance_violations": 0,
+    "high_risk_vendors": [],
+    "details": {
+      "meta": {
+        "total": 1
+      }
+    }
+  }
+}

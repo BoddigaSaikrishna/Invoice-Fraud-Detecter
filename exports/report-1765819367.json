@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "total": 2
+  },
+  "records": [
+    {
+      "invoice_id": "INV-2025-001",
+      "vendor": "Acme Office Supplies",
+      "amount": 2450.75,
+      "currency": "USD",
+      "date": "2025-12-01",
+      "items": [
+        {
+          "desc": "Desk chairs",
+          "qty": 5,
+          "unit_price": 490.15
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-2025-001",
+        "vendor": "Acme Office Supplies",
+        "amount": 2450.75,
+        "currency": "USD",
+        "date": "2025-12-01",
+        "items": [
+          {
+            "desc": "Desk chairs",
+            "qty": 5,
+            "unit_price": 490.15
+          }
+        ]
+      }
+    },
+    {
+      "invoice_id": "INV-2025-002",
+      "vendor": "Tech Solutions Inc",
+      "amount": 45000.0,
+      "currency": "USD",
+      "date": "2025-12-03",
+      "items": [
+        {
+          "desc": "Software licenses",
+          "qty": 1,
+          "unit_price": 45000
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-2025-002",
+        "vendor": "Tech Solutions Inc",
+        "amount": 45000.0,
+        "currency": "USD",
+        "date": "2025-12-03",
+        "items": [
+          {
+            "desc": "Software licenses",
+            "qty": 1,
+            "unit_price": 45000
+          }
+        ]
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [],
+    "inflated": [],
+    "fake_vendors": []
+  },
+  "compliance": {
+    "violations": []
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Acme Office Supplies": {
+        "score": 61,
+        "count": 1,
+        "total_amount": 2450.75
+      },
+      "Tech Solutions Inc": {
+        "score": 100,
+        "count": 1,
+        "total_amount": 45000.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 2,
+    "fraud_alerts": 0,
+    "compliance_violations": 0,
+    "high_risk_vendors": [
+      {
+        "vendor": "Tech Solutions Inc",
+        "score": 100
+      }
+    ],
+    "details": {
+      "meta": {
+        "total": 2
+      }
+    }
+  }
+}

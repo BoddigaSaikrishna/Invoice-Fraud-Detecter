@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "total": 4
+  },
+  "records": [
+    {
+      "invoice_id": "INV-0001",
+      "vendor": "Acme Supplies Ltd",
+      "amount": 1200.5,
+      "currency": "USD",
+      "date": "2025-11-01",
+      "items": [
+        {
+          "desc": "Office chairs",
+          "qty": 10,
+          "unit_price": 120.05
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-0001",
+        "vendor": "Acme Supplies Ltd",
+        "amount": 1200.5,
+        "currency": "USD",
+        "date": "2025-11-01",
+        "items": [
+          {
+            "desc": "Office chairs",
+            "qty": 10,
+            "unit_price": 120.05
+          }
+        ]
+      }
+    },
+    {
+      "invoice_id": "INV-0002",
+      "vendor": "Trusted Services",
+      "amount": 50000.0,
+      "currency": "USD",
+      "date": "2025-11-05",
+      "items": [
+        {
+          "desc": "Consulting",
+          "qty": 1,
+          "unit_price": 50000
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-0002",
+        "vendor": "Trusted Services",
+        "amount": 50000.0,
+        "currency": "USD",
+        "date": "2025-11-05",
+        "items": [
+          {
+            "desc": "Consulting",
+            "qty": 1,
+            "unit_price": 50000
+          }
+        ]
+      }
+    },
+    {
+      "invoice_id": "INV-0002",
+      "vendor": "Trusted Services",
+      "amount": 50000.0,
+      "currency": "USD",
+      "date": "2025-11-05",
+      "items": [
+        {
+          "desc": "Consulting duplicate",
+          "qty": 1,
+          "unit_price": 50000
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-0002",
+        "vendor": "Trusted Services",
+        "amount": 50000.0,
+        "currency": "USD",
+        "date": "2025-11-05",
+        "items": [
+          {
+            "desc": "Consulting duplicate",
+            "qty": 1,
+            "unit_price": 50000
+          }
+        ]
+      }
+    },
+    {
+      "invoice_id": "INV-0003",
+      "vendor": "Test",
+      "amount": 1000000.0,
+      "currency": "USD",
+      "date": "2025-11-10",
+      "items": [
+        {
+          "desc": "Equipment",
+          "qty": 1,
+          "unit_price": 1000000
+        }
+      ],
+      "raw": {
+        "invoice_id": "INV-0003",
+        "vendor": "Test",
+        "amount": 1000000.0,
+        "currency": "USD",
+        "date": "2025-11-10",
+        "items": [
+          {
+            "desc": "Equipment",
+            "qty": 1,
+            "unit_price": 1000000
+          }
+        ]
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [
+      {
+        "invoice_id": "INV-0002",
+        "first": {
+          "invoice_id": "INV-0002",
+          "vendor": "Trusted Services",
+          "amount": 50000.0,
+          "currency": "USD",
+          "date": "2025-11-05",
+          "items": [
+            {
+              "desc": "Consulting",
+              "qty": 1,
+              "unit_price": 50000
+            }
+          ],
+          "raw": {
+            "invoice_id": "INV-0002",
+            "vendor": "Trusted Services",
+            "amount": 50000.0,
+            "currency": "USD",
+            "date": "2025-11-05",
+            "items": [
+              {
+                "desc": "Consulting",
+                "qty": 1,
+                "unit_price": 50000
+              }
+            ]
+          }
+        },
+        "duplicate": {
+          "invoice_id": "INV-0002",
+          "vendor": "Trusted Services",
+          "amount": 50000.0,
+          "currency": "USD",
+          "date": "2025-11-05",
+          "items": [
+            {
+              "desc": "Consulting duplicate",
+              "qty": 1,
+              "unit_price": 50000
+            }
+          ],
+          "raw": {
+            "invoice_id": "INV-0002",
+            "vendor": "Trusted Services",
+            "amount": 50000.0,
+            "currency": "USD",
+            "date": "2025-11-05",
+            "items": [
+              {
+                "desc": "Consulting duplicate",
+                "qty": 1,
+                "unit_price": 50000
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "inflated": [],
+    "fake_vendors": [
+      {
+        "invoice_id": "INV-0003",
+        "vendor": "Test"
+      }
+    ]
+  },
+  "compliance": {
+    "violations": [
+      {
+        "invoice_id": "INV-0003",
+        "violation": "exceeds_max_single_payment",
+        "amount": 1000000.0
+      }
+    ]
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Acme Supplies Ltd": {
+        "score": 55,
+        "count": 1,
+        "total_amount": 1200.5
+      },
+      "Trusted Services": {
+        "score": 100,
+        "count": 2,
+        "total_amount": 100000.0
+      },
+      "Test": {
+        "score": 100,
+        "count": 1,
+        "total_amount": 1000000.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 4,
+    "fraud_alerts": 2,
+    "compliance_violations": 1,
+    "high_risk_vendors": [
+      {
+        "vendor": "Trusted Services",
+        "score": 100
+      },
+      {
+        "vendor": "Test",
+        "score": 100
+      }
+    ],
+    "details": {
+      "meta": {
+        "total": 4
+      }
+    }
+  }
+}
