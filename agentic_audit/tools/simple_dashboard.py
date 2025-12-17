@@ -3,6 +3,7 @@ import json
 import time
 import re
 import os
+import sqlite3
 from functools import wraps
 from pathlib import Path
 from flask import Flask, request, render_template_string, redirect, send_file, session, url_for
@@ -16,9 +17,22 @@ try:
 except ImportError:
     PDF_SUPPORT = False
 
+try:
+    import pandas as pd
+    PANDAS_SUPPORT = True
+except ImportError:
+    PANDAS_SUPPORT = False
+
+try:
+    from docx import Document
+    DOCX_SUPPORT = True
+except ImportError:
+    DOCX_SUPPORT = False
+
 app = Flask(__name__)
 EXPORT_DIR = Path("exports").resolve()
 EXPORT_DIR.mkdir(exist_ok=True)
+DB_PATH = Path("audit.db")
 
 # Simple session-based auth
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-prod")
@@ -160,6 +174,303 @@ def parse_invoice_text(text):
         invoice["date"] = datetime.now().strftime("%Y-%m-%d")
     
     return invoice
+
+# --- Simple SQLite helpers ---
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at INTEGER,
+                total_invoices INTEGER,
+                fraud_alerts INTEGER,
+                compliance_violations INTEGER,
+                html_path TEXT,
+                json_path TEXT,
+                csv_path TEXT
+            )
+            """
+        )
+
+
+def record_report(report, html_file, json_file, csv_file):
+    total_invoices = len(report.get("invoices", [])) if isinstance(report, dict) else 0
+    fraud_alerts = len(report.get("fraud_alerts", [])) if isinstance(report, dict) else 0
+    compliance_violations = len(report.get("compliance_violations", [])) if isinstance(report, dict) else 0
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO reports (created_at, total_invoices, fraud_alerts, compliance_violations, html_path, json_path, csv_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                int(time.time()),
+                total_invoices,
+                fraud_alerts,
+                compliance_violations,
+                str(html_file),
+                str(json_file),
+                str(csv_file),
+            ),
+        )
+
+
+def fetch_reports(limit=10):
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(
+            "SELECT html_path FROM reports ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return [Path(r[0]).name for r in rows]
+
+# Initialize DB at import time (Flask 3+ removed before_first_request)
+init_db()
+
+# --- Multi-format file parsers ---
+def extract_from_txt(file_content):
+    """Extract invoice data from plain text"""
+    lines = file_content.split('\n')
+    full_text = ' '.join(lines)
+    return parse_invoice_text(full_text)
+
+def extract_from_csv(file_path):
+    """Extract invoice data from CSV"""
+    if not PANDAS_SUPPORT:
+        return None
+    
+    try:
+        df = pd.read_csv(file_path)
+        
+        # Try to find relevant columns
+        invoice_data = {
+            "invoice_id": None,
+            "vendor": None,
+            "amount": None,
+            "date": None,
+            "description": "CSV invoice"
+        }
+        
+        # Map common CSV column names
+        for col in df.columns:
+            col_lower = col.lower()
+            if 'invoice' in col_lower or 'order' in col_lower or 'id' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["invoice_id"] = str(df[col].iloc[0])
+            elif 'vendor' in col_lower or 'seller' in col_lower or 'company' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["vendor"] = str(df[col].iloc[0])
+            elif 'amount' in col_lower or 'total' in col_lower or 'price' in col_lower:
+                if df[col].notna().any():
+                    try:
+                        invoice_data["amount"] = float(df[col].iloc[0])
+                    except:
+                        pass
+            elif 'date' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["date"] = str(df[col].iloc[0])
+        
+        # Set defaults
+        if not invoice_data["invoice_id"]:
+            invoice_data["invoice_id"] = f"INV-{int(time.time())}"
+        if not invoice_data["vendor"]:
+            invoice_data["vendor"] = "Unknown Vendor"
+        if not invoice_data["amount"]:
+            invoice_data["amount"] = 0.0
+        if not invoice_data["date"]:
+            from datetime import datetime
+            invoice_data["date"] = datetime.now().strftime("%Y-%m-%d")
+        
+        return invoice_data
+    except Exception as e:
+        print(f"CSV extraction error: {e}")
+        return None
+
+def extract_from_xlsx(file_path):
+    """Extract invoice data from Excel"""
+    if not PANDAS_SUPPORT:
+        return None
+    
+    try:
+        df = pd.read_excel(file_path)
+        
+        invoice_data = {
+            "invoice_id": None,
+            "vendor": None,
+            "amount": None,
+            "date": None,
+            "description": "Excel invoice"
+        }
+        
+        # Map common Excel column names
+        for col in df.columns:
+            col_lower = col.lower()
+            if 'invoice' in col_lower or 'order' in col_lower or 'id' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["invoice_id"] = str(df[col].iloc[0])
+            elif 'vendor' in col_lower or 'seller' in col_lower or 'company' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["vendor"] = str(df[col].iloc[0])
+            elif 'amount' in col_lower or 'total' in col_lower or 'price' in col_lower:
+                if df[col].notna().any():
+                    try:
+                        invoice_data["amount"] = float(df[col].iloc[0])
+                    except:
+                        pass
+            elif 'date' in col_lower:
+                if df[col].notna().any():
+                    invoice_data["date"] = str(df[col].iloc[0])
+        
+        # Set defaults
+        if not invoice_data["invoice_id"]:
+            invoice_data["invoice_id"] = f"INV-{int(time.time())}"
+        if not invoice_data["vendor"]:
+            invoice_data["vendor"] = "Unknown Vendor"
+        if not invoice_data["amount"]:
+            invoice_data["amount"] = 0.0
+        if not invoice_data["date"]:
+            from datetime import datetime
+            invoice_data["date"] = datetime.now().strftime("%Y-%m-%d")
+        
+        return invoice_data
+    except Exception as e:
+        print(f"Excel extraction error: {e}")
+        return None
+
+def extract_from_docx(file_path):
+    """Extract invoice data from Word document"""
+    if not DOCX_SUPPORT:
+        return None
+    
+    try:
+        doc = Document(file_path)
+        full_text = '\n'.join([para.text for para in doc.paragraphs])
+        return parse_invoice_text(full_text)
+    except Exception as e:
+        print(f"DOCX extraction error: {e}")
+        return None
+
+def process_file(file, filename):
+    """Process any file type and extract invoice data"""
+    docs = []
+    
+    # PDF
+    if filename.lower().endswith('.pdf'):
+        if not PDF_SUPPORT:
+            return None, "PDF support not installed. Run: pip install pdfplumber"
+        
+        temp_file = Path("/tmp") / filename if Path("/tmp").exists() else Path("exports") / filename
+        file.save(str(temp_file))
+        invoice_data = extract_invoice_from_pdf(str(temp_file))
+        try:
+            temp_file.unlink()
+        except:
+            pass
+        
+        if not invoice_data:
+            return None, "Could not extract invoice data from PDF"
+        docs = [invoice_data]
+    
+    # JSON
+    elif filename.lower().endswith('.json'):
+        try:
+            raw_data = file.read()
+            data = None
+            
+            for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1']:
+                try:
+                    content = raw_data.decode(encoding)
+                    data = json.loads(content)
+                    break
+                except:
+                    continue
+            
+            if data is None:
+                return None, "Failed to parse JSON. Ensure file is valid UTF-8 JSON"
+            
+            docs = data if isinstance(data, list) else [data]
+        except Exception as e:
+            return None, f"JSON parse error: {str(e)}"
+    
+    # TXT
+    elif filename.lower().endswith('.txt'):
+        try:
+            content = file.read().decode('utf-8', errors='ignore')
+            invoice_data = extract_from_txt(content)
+            if invoice_data:
+                docs = [invoice_data]
+            else:
+                return None, "Could not extract invoice data from text"
+        except Exception as e:
+            return None, f"Text parse error: {str(e)}"
+    
+    # CSV
+    elif filename.lower().endswith('.csv'):
+        if not PANDAS_SUPPORT:
+            return None, "CSV support requires pandas. Run: pip install pandas"
+        
+        try:
+            temp_file = Path("exports") / filename
+            file.save(str(temp_file))
+            invoice_data = extract_from_csv(str(temp_file))
+            try:
+                temp_file.unlink()
+            except:
+                pass
+            
+            if invoice_data:
+                docs = [invoice_data]
+            else:
+                return None, "Could not extract invoice data from CSV"
+        except Exception as e:
+            return None, f"CSV parse error: {str(e)}"
+    
+    # XLSX/XLS
+    elif filename.lower().endswith(('.xlsx', '.xls')):
+        if not PANDAS_SUPPORT:
+            return None, "Excel support requires pandas. Run: pip install pandas openpyxl"
+        
+        try:
+            temp_file = Path("exports") / filename
+            file.save(str(temp_file))
+            invoice_data = extract_from_xlsx(str(temp_file))
+            try:
+                temp_file.unlink()
+            except:
+                pass
+            
+            if invoice_data:
+                docs = [invoice_data]
+            else:
+                return None, "Could not extract invoice data from Excel"
+        except Exception as e:
+            return None, f"Excel parse error: {str(e)}"
+    
+    # DOCX
+    elif filename.lower().endswith('.docx'):
+        if not DOCX_SUPPORT:
+            return None, "DOCX support requires python-docx. Run: pip install python-docx"
+        
+        try:
+            temp_file = Path("exports") / filename
+            file.save(str(temp_file))
+            invoice_data = extract_from_docx(str(temp_file))
+            try:
+                temp_file.unlink()
+            except:
+                pass
+            
+            if invoice_data:
+                docs = [invoice_data]
+            else:
+                return None, "Could not extract invoice data from document"
+        except Exception as e:
+            return None, f"DOCX parse error: {str(e)}"
+    
+    else:
+        return None, f"Unsupported file type: {filename}. Supported: PDF, JSON, TXT, CSV, XLSX, XLS, DOCX"
+    
+    return docs, None
 
 HTML = """
 <!DOCTYPE html>
@@ -654,9 +965,9 @@ HTML = """
                     <label for="fileInput" class="file-label">
                         <div class="upload-icon">📁</div>
                         <p>Click to browse or drag & drop your invoice file</p>
-                        <small>Accepts JSON & PDF files</small>
+                        <small>Accepts: PDF, JSON, TXT, CSV, XLSX, DOCX</small>
                     </label>
-                    <input type="file" name="file" id="fileInput" accept=".json,.pdf" required>
+                    <input type="file" name="file" id="fileInput" accept=".pdf,.json,.txt,.csv,.xlsx,.xls,.docx" required>
                     <div id="fileName" class="selected-file" style="display:none;"></div>
                 </div>
                 <button type="submit" id="submitBtn" disabled>🚀 Analyze Invoice</button>
@@ -854,7 +1165,9 @@ def logout():
 @app.route("/")
 def index():
     try:
-        reports = sorted([f.name for f in EXPORT_DIR.glob("report-*.html")], reverse=True)[:10]
+        reports = fetch_reports(10)
+        if not reports:
+            reports = sorted([f.name for f in EXPORT_DIR.glob("report-*.html")], reverse=True)[:10]
     except:
         reports = []
     return render_template_string(HTML, reports=reports)
@@ -869,64 +1182,16 @@ def upload():
         if file.filename == "":
             return "<h1>Error</h1><p>No file selected</p><a href='/'>Back</a>", 400
         
-        # Handle PDF files
-        if file.filename.endswith('.pdf'):
-            if not PDF_SUPPORT:
-                return "<h1>Error</h1><p>PDF support not installed. Run: pip install pdfplumber</p><a href='/'>Back</a>", 400
-            
-            # Save temporary file
-            temp_file = Path("/tmp") / file.filename if Path("/tmp").exists() else Path("exports") / file.filename
-            file.save(str(temp_file))
-            
-            # Extract invoice from PDF
-            invoice_data = extract_invoice_from_pdf(str(temp_file))
-            if not invoice_data:
-                return "<h1>Error</h1><p>Could not extract invoice data from PDF. Please ensure it's a valid invoice.</p><a href='/'>Back</a>", 400
-            
-            docs = [invoice_data]
-            print(f"Extracted from PDF: {invoice_data}")
-            
-            # Clean up temp file
-            try:
-                temp_file.unlink()
-            except:
-                pass
+        # Process file using multi-format handler
+        docs, error = process_file(file, file.filename)
         
-        # Handle JSON files
-        elif file.filename.endswith('.json'):
-            # Parse JSON
-            try:
-                raw_data = file.read()
-                data = None
-                last_error = None
-                
-                for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1']:
-                    try:
-                        content = raw_data.decode(encoding)
-                        data = json.loads(content)
-                        print(f"Successfully parsed with encoding: {encoding}")
-                        break
-                    except UnicodeDecodeError as ue:
-                        last_error = f"Encoding {encoding} failed: {str(ue)}"
-                        print(last_error)
-                        continue
-                    except json.JSONDecodeError as je:
-                        last_error = f"JSON decode with {encoding} failed at position {je.pos}: {je.msg}"
-                        print(last_error)
-                        continue
-                
-                if data is None:
-                    error_msg = f"Failed to parse file. Last error: {last_error}<br><br>Please ensure your file is:<br>1. Valid JSON format<br>2. Saved as UTF-8 encoding<br>3. Contains invoice data"
-                    return f"<h1>Parse Error</h1><p>{error_msg}</p><a href='/'>Back</a>", 400
-                
-                # Normalize to list
-                docs = data if isinstance(data, list) else [data]
-                
-            except Exception as e:
-                return f"<h1>Error</h1><p>Failed to read file: {str(e)}</p><a href='/'>Back</a>", 400
+        if error:
+            return f"<h1>Error</h1><p>{error}</p><a href='/'>Back</a>", 400
         
-        else:
-            return "<h1>Error</h1><p>Unsupported file type. Please upload JSON or PDF.</p><a href='/'>Back</a>", 400
+        if not docs:
+            return "<h1>Error</h1><p>Could not extract any invoice data from file</p><a href='/'>Back</a>", 400
+        
+        print(f"Processed {file.filename}: Extracted {len(docs)} document(s)")
         
         # Run pipeline
         pipe = Pipeline()
@@ -945,6 +1210,7 @@ def upload():
         
         exporter.export_csv(str(json_file), str(csv_file))
         exporter.export_html(str(json_file), str(html_file))
+        record_report(report, html_file, json_file, csv_file)
         
         # Redirect to report
         return redirect(f"/download/{html_file.name}")
@@ -996,6 +1262,7 @@ def create_invoice():
         
         exporter.export_csv(str(json_file), str(csv_file))
         exporter.export_html(str(json_file), str(html_file))
+        record_report(report, html_file, json_file, csv_file)
         
         # Redirect to report
         return redirect(f"/download/{html_file.name}")
@@ -1006,4 +1273,5 @@ def create_invoice():
 if __name__ == "__main__":
     print(f"Starting dashboard on http://127.0.0.1:5000")
     print(f"Exports directory: {EXPORT_DIR}")
+    init_db()
     app.run(host="127.0.0.1", port=5000, debug=False)
