@@ -1,0 +1,2 @@
+invoice_id,vendor,amount,currency,date,items_count,items_summary,duplicate,inflated,fake_vendor,compliance_violation,vendor_score
+Sold,Flipkart Internet Private Limited,2.0,USD,03-12-2025,0,,False,False,False,False,49
