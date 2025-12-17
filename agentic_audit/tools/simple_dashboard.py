@@ -175,9 +175,11 @@ def parse_invoice_text(text):
     
     return invoice
 
+
 # --- Simple SQLite helpers ---
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
+        # Reports table
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS reports (
@@ -192,6 +194,75 @@ def init_db():
             )
             """
         )
+        # Users table
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+            """
+        )
+SIGNUP_HTML = """
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Sign Up - Audit Dashboard</title>
+    <style>
+        body { font-family: Segoe UI, Arial, sans-serif; background: #f5f7fb; display: grid; place-items: center; height: 100vh; margin: 0; }
+        .card { width: 360px; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h1 { margin: 0 0 12px; font-size: 1.4rem; }
+        p { margin: 0 0 16px; color: #666; font-size: 0.95rem; }
+        label { display: block; font-weight: 600; margin: 12px 0 6px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.12); }
+        button { width: 100%; margin-top: 16px; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-weight: 700; cursor: pointer; }
+        .hint { margin-top: 12px; color: #999; font-size: 0.85rem; }
+        .error { color: #b00020; background: #fdecef; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .success { color: #22543d; background: #e6ffed; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class=\"card\">
+        <h1>📝 Sign Up</h1>
+        <p>Create a new account to use the dashboard.</p>
+        {% if error %}<div class=\"error\">{{ error }}</div>{% endif %}
+        {% if success %}<div class=\"success\">{{ success }}</div>{% endif %}
+        <form method=\"post\">
+            <label>Username</label>
+            <input name=\"username\" placeholder=\"Choose a username\" required>
+            <label>Password</label>
+            <input type=\"password\" name=\"password\" placeholder=\"Create a password\" required>
+            <button type=\"submit\">Sign up</button>
+        </form>
+        <div class=\"hint\">Already have an account? <a href=\"/login\">Login</a></div>
+    </div>
+</body>
+</html>
+"""
+# --- Signup route ---
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    error = None
+    success = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        if not username or not password:
+            error = "Username and password are required."
+        else:
+            try:
+                with sqlite3.connect(DB_PATH) as conn:
+                    conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+                success = "Account created! You can now <a href='/login'>login</a>."
+            except sqlite3.IntegrityError:
+                error = "Username already exists. Please choose another."
+            except Exception as e:
+                error = f"Error: {e}"
+    return render_template_string(SIGNUP_HTML, error=error, success=success)
 
 
 def record_report(report, html_file, json_file, csv_file):
@@ -1008,6 +1079,7 @@ HTML = """
             <div class="reports-grid">
             {% for report in reports %}
                 <div class="report-item">
+                    <span style="font-weight:bold; margin-right:10px;">{{ loop.index }}.</span>
                     <a href="/download/{{ report }}">{{ report }}</a>
                     <span class="report-badge">View</span>
                 </div>
@@ -1143,13 +1215,21 @@ HTML = """
 </html>
 """
 
+def login():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         u = request.form.get("username", "").strip()
         p = request.form.get("password", "")
-        if u == ADMIN_USER and p == ADMIN_PASSWORD:
+        # Check DB for user
+        with sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute("SELECT password FROM users WHERE username=?", (u,)).fetchone()
+        if row and row[0] == p:
+            session["user"] = u
+            nxt = request.args.get("next") or url_for("index")
+            return redirect(nxt)
+        elif u == ADMIN_USER and p == ADMIN_PASSWORD:
             session["user"] = u
             nxt = request.args.get("next") or url_for("index")
             return redirect(nxt)
@@ -1166,9 +1246,17 @@ def logout():
 def index():
     try:
         reports = fetch_reports(10)
-        if not reports:
-            reports = sorted([f.name for f in EXPORT_DIR.glob("report-*.html")], reverse=True)[:10]
-    except:
+        # If fewer than 10 in DB, fill with recent files from exports folder
+        if len(reports) < 10:
+            existing = set(reports)
+            files = [f.name for f in sorted(EXPORT_DIR.glob("report-*.html"), reverse=True)]
+            for f in files:
+                if f not in existing:
+                    reports.append(f)
+                if len(reports) >= 10:
+                    break
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
         reports = []
     return render_template_string(HTML, reports=reports)
 
