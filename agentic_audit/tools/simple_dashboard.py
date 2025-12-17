@@ -269,6 +269,7 @@ def record_report(report, html_file, json_file, csv_file):
     total_invoices = len(report.get("invoices", [])) if isinstance(report, dict) else 0
     fraud_alerts = len(report.get("fraud_alerts", [])) if isinstance(report, dict) else 0
     compliance_violations = len(report.get("compliance_violations", [])) if isinstance(report, dict) else 0
+    # Store only the filenames in the DB for privacy/security
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """
@@ -280,9 +281,9 @@ def record_report(report, html_file, json_file, csv_file):
                 total_invoices,
                 fraud_alerts,
                 compliance_violations,
-                str(html_file),
-                str(json_file),
-                str(csv_file),
+                os.path.basename(str(html_file)),
+                os.path.basename(str(json_file)),
+                os.path.basename(str(csv_file)),
             ),
         )
 
@@ -294,7 +295,14 @@ def fetch_reports(limit=10):
             (limit,),
         ).fetchall()
     # Only return the filename, not the full path, for security
-    return [Path(r[0]).name for r in rows]
+    basenames = []
+    for r in rows:
+        if not r:
+            continue
+        val = r[0] or ""
+        # Handle any path separators (Windows or POSIX)
+        basenames.append(os.path.basename(val))
+    return basenames
 
 # Initialize DB at import time (Flask 3+ removed before_first_request)
 init_db()
