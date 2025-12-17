@@ -126,6 +126,15 @@ def export_html(report_path: str, out_path: str):
         html.append(f"<tr><td>Flags</td><td>-</td><td>{flag_list}</td></tr>")
         html.append(f"<tr><td colspan=3 style='background:#eee;'></td></tr>")
 
-    html += ["</table>", "</body>", "</html>"]
+    html += ["</table>"]
+
+    # Add summary message at the bottom
+    fraud_alerts = report.get("summary", {}).get("fraud_alerts", 0)
+    if fraud_alerts == 0:
+        html.append("<div style='margin-top:30px;padding:18px;background:#e6ffed;color:#22543d;font-size:1.2em;border-radius:10px;text-align:center;font-weight:bold;'>✅ No frauds detected. Invoice is perfect!</div>")
+    else:
+        html.append(f"<div style='margin-top:30px;padding:18px;background:#fff5f5;color:#b00020;font-size:1.2em;border-radius:10px;text-align:center;font-weight:bold;'>⚠️ {fraud_alerts} fraud alert(s) detected! Please review the flagged invoices above.</div>")
+
+    html += ["</body>", "</html>"]
 
     out.write_text("\n".join(html), encoding="utf-8")
