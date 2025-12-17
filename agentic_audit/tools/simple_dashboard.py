@@ -293,6 +293,7 @@ def fetch_reports(limit=10):
             "SELECT html_path FROM reports ORDER BY created_at DESC LIMIT ?",
             (limit,),
         ).fetchall()
+    # Only return the filename, not the full path, for security
     return [Path(r[0]).name for r in rows]
 
 # Initialize DB at import time (Flask 3+ removed before_first_request)
