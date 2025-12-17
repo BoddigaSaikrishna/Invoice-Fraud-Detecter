@@ -1215,7 +1215,7 @@ HTML = """
 </html>
 """
 
-def login():
+    # ...existing code...
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
