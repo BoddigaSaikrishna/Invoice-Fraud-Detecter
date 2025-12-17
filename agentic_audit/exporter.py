@@ -102,16 +102,29 @@ def export_html(report_path: str, out_path: str):
     for v in high_risk:
         html.append(f"<li>{v.get('vendor')} — score: {v.get('score')}</li>")
 
-    html += ["</ul>", "<h2>Invoices</h2>", "<table border=1 cellpadding=4 cellspacing=0>", "<tr><th>Invoice</th><th>Vendor</th><th>Amount</th><th>Flags</th></tr>"]
+    html += [
+        "</ul>",
+        "<h2>Invoices: Before & After Detection</h2>",
+        "<table border=1 cellpadding=4 cellspacing=0>",
+        "<tr><th>Field</th><th>Before (Original)</th><th>After Detection</th></tr>"
+    ]
 
     flags = _invoice_flags(report)
     for r in report.get("records", []):
         iid = r.get("invoice_id")
         v = r.get("vendor") or ""
         amt = r.get("amount")
+        raw = r.get("raw", {})
         fflags = flags.get(iid, {})
         flag_list = ", ".join([k for k, vv in fflags.items() if vv]) if fflags else "-"
-        html.append(f"<tr><td>{iid}</td><td>{v}</td><td>{amt}</td><td>{flag_list}</td></tr>")
+
+        html.append(f"<tr><td colspan=3 style='background:#f7f7f7;font-weight:bold;'>Invoice ID: {iid}</td></tr>")
+        html.append(f"<tr><td>Vendor</td><td>{raw.get('vendor','')}</td><td>{v}</td></tr>")
+        html.append(f"<tr><td>Amount</td><td>{raw.get('amount','')}</td><td>{amt}</td></tr>")
+        html.append(f"<tr><td>Date</td><td>{raw.get('date','')}</td><td>{r.get('date','')}</td></tr>")
+        html.append(f"<tr><td>Description</td><td>{raw.get('description','')}</td><td>{r.get('description','')}</td></tr>")
+        html.append(f"<tr><td>Flags</td><td>-</td><td>{flag_list}</td></tr>")
+        html.append(f"<tr><td colspan=3 style='background:#eee;'></td></tr>")
 
     html += ["</table>", "</body>", "</html>"]
 
