@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "total": 1
+  },
+  "records": [
+    {
+      "invoice_id": "To",
+      "vendor": "Blink Commerce Private Limited",
+      "amount": 0.0,
+      "currency": "USD",
+      "date": "20-04-2025",
+      "items": [],
+      "raw": {
+        "invoice_id": "To",
+        "vendor": "Blink Commerce Private Limited",
+        "amount": 0.0,
+        "date": "20-04-2025",
+        "description": "Uploaded invoice"
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [],
+    "inflated": [],
+    "fake_vendors": []
+  },
+  "compliance": {
+    "violations": [
+      {
+        "invoice_id": "To",
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    ]
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Blink Commerce Private Limited": {
+        "score": 49,
+        "count": 1,
+        "total_amount": 0.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 1,
+    "fraud_alerts": 0,
+    "compliance_violations": 1,
+    "high_risk_vendors": [],
+    "details": {
+      "meta": {
+        "total": 1
+      }
+    }
+  }
+}

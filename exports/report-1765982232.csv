@@ -1,0 +1,2 @@
+invoice_id,vendor,amount,currency,date,items_count,items_summary,duplicate,inflated,fake_vendor,compliance_violation,vendor_score
+To,Blink Commerce Private Limited,0.0,USD,20-04-2025,0,,False,False,False,True,49

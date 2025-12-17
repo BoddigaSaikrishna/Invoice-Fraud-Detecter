@@ -656,7 +656,7 @@ HTML = """
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border-radius: 24px;
+            border-radius: 28px;
             padding: 40px;
             margin-bottom: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.2);
@@ -835,11 +835,12 @@ HTML = """
         .report-item {
             padding: 20px 24px;
             background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
-            border-radius: 12px;
+            border-radius: 18px;
             border-left: 5px solid #667eea;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 32px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
@@ -851,23 +852,65 @@ HTML = """
             border-left-color: #764ba2;
         }
         
-        .report-item a {
+        /* Only make non-view anchors take the flexible space */
+        .report-item a:not(.view-btn) {
             color: #2d3748;
             text-decoration: none;
             font-weight: 600;
             flex: 1;
             font-size: 0.95rem;
         }
+        /* Make the filename area truncate instead of forcing layout */
+        .report-item span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
         
         .report-badge {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
+            padding: 6px 14px;
+            border-radius: 14px;
             font-size: 0.85rem;
             font-weight: 600;
             box-shadow: 0 4px 10px rgba(102,126,234,0.3);
             transition: all 0.3s;
+        }
+        /* Make view button styles specific to report items to avoid conflicts */
+        .report-item .view-btn {
+            min-width: 0;
+            width: auto;
+            display: inline-block;
+            text-align: center;
+            margin-left: 8px;
+            margin-right: 0;
+            padding: 2px 6px !important;
+            font-size: 0.72em !important;
+            line-height: 1.0 !important;
+            height: 24px !important;
+            flex: 0 0 84px !important;
+            width: 84px !important;
+            border-radius: 0.5rem;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            box-shadow: none;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .view-btn:hover {
+            background: #5a67d8;
+            color: #fff;
+        }
+
+        /* Spinner/animation size reduction */
+        .spinner-border, .spinner-grow {
+            width: 0.8rem !important;
+            height: 0.8rem !important;
+            border-width: 0.10em !important;
         }
         
         .report-badge:hover {
@@ -1081,8 +1124,8 @@ HTML = """
             {% for report in reports %}
                 <div class="report-item">
                     <span style="font-weight:bold; margin-right:10px;">{{ loop.index }}.</span>
-                    <a href="/download/{{ report }}">{{ report }}</a>
-                    <span class="report-badge">View</span>
+                    <span style="flex:1;">{{ report }}</span>
+                    <a href="/download/{{ report }}" class="view-btn" style="text-decoration:none;">View</a>
                 </div>
             {% endfor %}
             </div>
@@ -1249,13 +1292,15 @@ def index():
         reports = fetch_reports(10)
         # If fewer than 10 in DB, fill with recent files from exports folder
         if len(reports) < 10:
-            existing = set(reports)
+            existing = set([Path(r).name for r in reports])
             files = [f.name for f in sorted(EXPORT_DIR.glob("report-*.html"), reverse=True)]
             for f in files:
                 if f not in existing:
                     reports.append(f)
                 if len(reports) >= 10:
                     break
+        # Always ensure only filenames (no paths)
+        reports = [Path(r).name for r in reports]
     except Exception as e:
         print(f"Error fetching reports: {e}")
         reports = []

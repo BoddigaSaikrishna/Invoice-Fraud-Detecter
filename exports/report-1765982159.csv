@@ -1,0 +1,3 @@
+invoice_id,vendor,amount,currency,date,items_count,items_summary,duplicate,inflated,fake_vendor,compliance_violation,vendor_score
+INV-2025-001,Acme Office Supplies,2450.75,USD,2025-12-01,1,Desk chairs,False,False,False,False,61
+INV-2025-002,Tech Solutions Inc,45000.0,USD,2025-12-03,1,Software licenses,False,False,False,False,100

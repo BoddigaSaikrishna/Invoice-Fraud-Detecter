@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "total": 1
+  },
+  "records": [
+    {
+      "invoice_id": "INV-1765982310",
+      "vendor": "Unknown Vendor",
+      "amount": 0.0,
+      "currency": "USD",
+      "date": "2025-12-17",
+      "items": [],
+      "raw": {
+        "invoice_id": "INV-1765982310",
+        "vendor": "Unknown Vendor",
+        "amount": 0.0,
+        "date": "2025-12-17",
+        "description": "Uploaded invoice"
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [],
+    "inflated": [],
+    "fake_vendors": [
+      {
+        "invoice_id": "INV-1765982310",
+        "vendor": "Unknown Vendor"
+      }
+    ]
+  },
+  "compliance": {
+    "violations": [
+      {
+        "invoice_id": "INV-1765982310",
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    ]
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Unknown Vendor": {
+        "score": 49,
+        "count": 1,
+        "total_amount": 0.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 1,
+    "fraud_alerts": 1,
+    "compliance_violations": 1,
+    "high_risk_vendors": [],
+    "details": {
+      "meta": {
+        "total": 1
+      }
+    }
+  }
+}
