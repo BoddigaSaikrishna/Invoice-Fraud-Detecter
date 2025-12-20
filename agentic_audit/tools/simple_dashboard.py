@@ -29,6 +29,19 @@ try:
 except ImportError:
     DOCX_SUPPORT = False
 
+# Image / OCR support
+try:
+    from PIL import Image
+    PIL_SUPPORT = True
+except Exception:
+    PIL_SUPPORT = False
+
+try:
+    import pytesseract
+    TESSERACT_SUPPORT = True
+except Exception:
+    TESSERACT_SUPPORT = False
+
 app = Flask(__name__)
 EXPORT_DIR = Path("exports").resolve()
 EXPORT_DIR.mkdir(exist_ok=True)
@@ -430,6 +443,23 @@ def extract_from_docx(file_path):
         print(f"DOCX extraction error: {e}")
         return None
 
+def extract_from_image(file_path):
+    """Extract invoice data from image using OCR (pytesseract + Pillow)"""
+    if not (PIL_SUPPORT and TESSERACT_SUPPORT):
+        return None
+    try:
+        img = Image.open(file_path)
+        # convert to RGB to handle some formats
+        img = img.convert('RGB')
+        text = pytesseract.image_to_string(img)
+        if not text or len(text.strip()) == 0:
+            return None
+        invoice_data = parse_invoice_text(text)
+        return invoice_data
+    except Exception as e:
+        print(f"Image OCR error: {e}")
+        return None
+
 def process_file(file, filename):
     """Process any file type and extract invoice data"""
     docs = []
@@ -546,6 +576,26 @@ def process_file(file, filename):
                 return None, "Could not extract invoice data from document"
         except Exception as e:
             return None, f"DOCX parse error: {str(e)}"
+
+    # Images (JPG, PNG, TIFF, GIF, WEBP, BMP)
+    elif filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif', '.webp')):
+        if not (PIL_SUPPORT and TESSERACT_SUPPORT):
+            return None, "Image OCR requires Pillow and pytesseract and system Tesseract installed. Run: pip install pillow pytesseract and install tesseract-ocr on your system"
+        try:
+            temp_file = Path("exports") / filename
+            file.save(str(temp_file))
+            invoice_data = extract_from_image(str(temp_file))
+            try:
+                temp_file.unlink()
+            except:
+                pass
+
+            if invoice_data:
+                docs = [invoice_data]
+            else:
+                return None, "Could not extract invoice data from image"
+        except Exception as e:
+            return None, f"Image parse error: {str(e)}"
     
     else:
         return None, f"Unsupported file type: {filename}. Supported: PDF, JSON, TXT, CSV, XLSX, XLS, DOCX"
@@ -1090,7 +1140,7 @@ HTML = """
                         <p>Click to browse or drag & drop your invoice file</p>
                         <small>Accepts: PDF, JSON, TXT, CSV, XLSX, DOCX</small>
                     </label>
-                    <input type="file" name="file" id="fileInput" accept=".pdf,.json,.txt,.csv,.xlsx,.xls,.docx" required>
+                    <input type="file" name="file" id="fileInput" accept="image/*,.pdf,.json,.txt,.csv,.xlsx,.xls,.docx" required>
                     <div id="fileName" class="selected-file" style="display:none;"></div>
                 </div>
                 <button type="submit" id="submitBtn" disabled>🚀 Analyze Invoice</button>
