@@ -15,6 +15,10 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libxslt1.1 \
     libffi8 \
     libstdc++6 \
+    libleptonica-dev \
+    libtesseract-dev \
+    tesseract-ocr \
+    tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python deps

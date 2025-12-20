@@ -42,6 +42,15 @@ try:
 except Exception:
     TESSERACT_SUPPORT = False
 
+# If user provided a TESSERACT_CMD environment variable, use it (optional)
+if TESSERACT_SUPPORT:
+    t_cmd = os.environ.get("TESSERACT_CMD")
+    if t_cmd:
+        try:
+            pytesseract.pytesseract.tesseract_cmd = t_cmd
+        except Exception:
+            pass
+
 app = Flask(__name__)
 EXPORT_DIR = Path("exports").resolve()
 EXPORT_DIR.mkdir(exist_ok=True)
@@ -452,12 +461,15 @@ def extract_from_image(file_path):
         # convert to RGB to handle some formats
         img = img.convert('RGB')
         text = pytesseract.image_to_string(img)
-        if not text or len(text.strip()) == 0:
+        cleaned = text.strip() if text else ""
+        print(f"[OCR] extracted text length={len(cleaned)} from {file_path}")
+        if not cleaned:
+            print(f"[OCR] No text extracted from image: {file_path}")
             return None
-        invoice_data = parse_invoice_text(text)
+        invoice_data = parse_invoice_text(cleaned)
         return invoice_data
     except Exception as e:
-        print(f"Image OCR error: {e}")
+        print(f"Image OCR error for {file_path}: {e}")
         return None
 
 def process_file(file, filename):
