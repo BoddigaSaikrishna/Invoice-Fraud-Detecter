@@ -1,0 +1,2 @@
+invoice_id,vendor,amount,currency,date,items_count,items_summary,duplicate,inflated,fake_vendor,compliance_violation,vendor_score
+INV-1766249611,Notes,0.0,USD,2025-12-20,0,,False,False,False,True,49

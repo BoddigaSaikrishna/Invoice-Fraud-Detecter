@@ -7,6 +7,7 @@ import sqlite3
 from functools import wraps
 from pathlib import Path
 from flask import Flask, request, render_template_string, redirect, send_file, session, url_for
+import csv
 
 from agentic_audit.pipeline import Pipeline
 from agentic_audit import exporter
@@ -50,6 +51,44 @@ if TESSERACT_SUPPORT:
             pytesseract.pytesseract.tesseract_cmd = t_cmd
         except Exception:
             pass
+
+# RapidFuzz fuzzy matching for vendor verification
+try:
+    from rapidfuzz import fuzz
+    RAPIDFUZZ_SUPPORT = True
+except Exception:
+    RAPIDFUZZ_SUPPORT = False
+
+# Load vendor DB (simple CSV of known/trusted vendor names)
+VENDOR_DB = []
+try:
+    vendor_csv = Path("vendor_db/vendors.csv")
+    if vendor_csv.exists():
+        with open(vendor_csv, newline='', encoding='utf-8') as vf:
+            reader = csv.reader(vf)
+            for row in reader:
+                if row:
+                    VENDOR_DB.append(row[0].strip())
+except Exception:
+    VENDOR_DB = []
+
+def compute_vendor_confidence(vendor_name):
+    """Return best match and score (0-100) against VENDOR_DB using rapidfuzz."""
+    if not vendor_name:
+        return {"score": 0, "match": None}
+    if not (RAPIDFUZZ_SUPPORT and VENDOR_DB):
+        return {"score": None, "match": None}
+    best_score = -1
+    best_match = None
+    for v in VENDOR_DB:
+        try:
+            s = fuzz.token_sort_ratio(vendor_name, v)
+        except Exception:
+            s = 0
+        if s > best_score:
+            best_score = s
+            best_match = v
+    return {"score": int(best_score), "match": best_match}
 
 app = Flask(__name__)
 EXPORT_DIR = Path("exports").resolve()
@@ -1397,6 +1436,18 @@ def upload():
         
         print(f"Processed {file.filename}: Extracted {len(docs)} document(s)")
         
+        # Attach vendor fuzzy-match confidence to each extracted invoice (if available)
+        for d in docs:
+            try:
+                v = d.get("vendor") if isinstance(d, dict) else None
+                conf = compute_vendor_confidence(v)
+                # attach fields the pipeline/exporters can include
+                if isinstance(d, dict):
+                    d["vendor_confidence_score"] = conf.get("score")
+                    d["vendor_confidence_match"] = conf.get("match")
+            except Exception:
+                pass
+
         # Run pipeline
         pipe = Pipeline()
         report = pipe.run(docs)
@@ -1448,7 +1499,15 @@ def create_invoice():
         
         # Create document object
         docs = [invoice_data]
-        
+        # Attach vendor fuzzy-match confidence to created invoice
+        try:
+            v = invoice_data.get("vendor")
+            conf = compute_vendor_confidence(v)
+            invoice_data["vendor_confidence_score"] = conf.get("score")
+            invoice_data["vendor_confidence_match"] = conf.get("match")
+        except Exception:
+            pass
+
         # Run pipeline
         pipe = Pipeline()
         report = pipe.run(docs)

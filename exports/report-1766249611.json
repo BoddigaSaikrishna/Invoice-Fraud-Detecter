@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "total": 1
+  },
+  "records": [
+    {
+      "invoice_id": "INV-1766249611",
+      "vendor": "Notes",
+      "amount": 0.0,
+      "currency": "USD",
+      "date": "2025-12-20",
+      "items": [],
+      "raw": {
+        "invoice_id": "INV-1766249611",
+        "vendor": "Notes",
+        "amount": 0.0,
+        "date": "2025-12-20",
+        "description": "Uploaded invoice",
+        "vendor_confidence_score": 33,
+        "vendor_confidence_match": "Initech"
+      }
+    }
+  ],
+  "fraud": {
+    "duplicates": [],
+    "inflated": [],
+    "fake_vendors": []
+  },
+  "compliance": {
+    "violations": [
+      {
+        "invoice_id": "INV-1766249611",
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    ]
+  },
+  "vendor": {
+    "vendor_scores": {
+      "Notes": {
+        "score": 49,
+        "count": 1,
+        "total_amount": 0.0
+      }
+    }
+  },
+  "summary": {
+    "total_invoices": 1,
+    "fraud_alerts": 0,
+    "compliance_violations": 1,
+    "high_risk_vendors": [],
+    "details": {
+      "meta": {
+        "total": 1
+      }
+    }
+  }
+}
